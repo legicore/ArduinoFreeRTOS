@@ -66,7 +66,13 @@
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         0
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   ( ( size_t ) ( 4096 ) )
+#if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
+#define configTOTAL_HEAP_SIZE                   ( ( size_t ) 3072 )
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__)
+#define configTOTAL_HEAP_SIZE                   ( ( size_t ) 512 )
+#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#define configTOTAL_HEAP_SIZE                   ( ( size_t ) 1280 )
+#endif
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
 /* Hook function related definitions. */

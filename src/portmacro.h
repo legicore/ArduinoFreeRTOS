@@ -53,14 +53,14 @@ extern "C" {
 #define portCHAR		char
 #define portFLOAT		float
 #define portDOUBLE		double
-#define portLONG		int32_t
-#define portSHORT		int16_t
+#define portLONG		long
+#define portSHORT		int
 #define portSTACK_TYPE	uint8_t
-#define portBASE_TYPE	int8_t
+#define portBASE_TYPE	char
 
-typedef portSTACK_TYPE	StackType_t;
-typedef portBASE_TYPE	BaseType_t;
-typedef uint8_t			UBaseType_t;
+typedef portSTACK_TYPE StackType_t;
+typedef signed char BaseType_t;
+typedef unsigned char UBaseType_t;
 
 #if( configUSE_16_BIT_TICKS == 1 )
 	typedef uint16_t TickType_t;
