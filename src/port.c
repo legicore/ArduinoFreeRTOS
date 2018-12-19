@@ -606,23 +606,6 @@ void vPortYieldFromTick( void )
 #endif
 /*-----------------------------------------------------------*/
 
-/*
- * TODO
- */
-void initVariant( void )
-{
-    #if defined( USBCON )
-    {
-        USBDevice.attach();
-    }
-    #endif
-    
-    setup();
-
-    vTaskStartScheduler();
-}
-/*-----------------------------------------------------------*/
-
 #if configUSE_IDLE_HOOK == 1
 
     extern void serialEventRun( void ) __attribute__ ( ( weak ) );

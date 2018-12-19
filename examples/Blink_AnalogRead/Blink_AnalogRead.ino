@@ -15,7 +15,6 @@ void setup( void )
     while( Serial != true );
 
     /* Create our tasks. */
-    //xTaskCreate( vTaskBlink, "Blink", configMINIMAL_STACK_SIZE, NULL, 1, NULL );
     xTaskCreate(
         vTaskBlink,                 /* Pointer to the Task implementation. */
         "Blink",                    /* Internal name of the task. */
@@ -23,12 +22,12 @@ void setup( void )
         NULL,                       /* Task parameter (optional). */
         1,                          /* Task priority. */
         NULL                        /* Task handle (optional). */
-                                                                                
     );
 
     xTaskCreate( vTaskAnalogRead, "Analog", configMINIMAL_STACK_SIZE, NULL, 1, NULL );
 
-    /* At the end of the setup the kernel sheduler is started automatically. */
+    /* Start the kernel sheduler. */
+    vTaskStartScheduler();
 }
 /*-----------------------------------------------------------*/
 
