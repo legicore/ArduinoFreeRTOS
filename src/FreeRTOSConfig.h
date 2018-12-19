@@ -42,11 +42,18 @@
  * See http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
 
+/*
+ * The Arduino port can use either the watchdog or the timer 2 interrupt to
+ * generate the system tick. Set configUSE_WATCHDOG_TICK to 1 to use the
+ * watchdog, or 0 to use timer 2. In case of an Arduino Leonardo the watchdog
+ * is automatically used.
+ */
+#define configUSE_WATCHDOG_TICK                 0
+
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
 #define configCPU_CLOCK_HZ                      ( ( uint32_t ) F_CPU )
-#define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES                    4
 #define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 128 )
 #define configMAX_TASK_NAME_LEN                 8
@@ -108,6 +115,13 @@
 #define INCLUDE_xTaskAbortDelay                 0
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              0
+
+/* Set the tick rate. */
+#if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+    #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 / 15 )
+#else
+    #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
+#endif
 
 
 #endif /* FREERTOS_CONFIG_H */

@@ -36,6 +36,7 @@ Changes from V2.6.0
 
 #include <stdlib.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -481,44 +482,72 @@ void vPortYieldFromTick( void )
 }
 /*-----------------------------------------------------------*/
 
-/*
- * Setup timer 2 compare match A to generate a tick interrupt.
- */
-static void prvSetupTimerInterrupt( void )
-{
-uint32_t ulCompareMatch;
-uint8_t ucByte;
+#if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
 
-    /* Using 8bit timer 2 to generate the tick.  Correct fuses must be
-    selected for the configCPU_CLOCK_HZ clock. */
+    /*
+    * Setup the watchdog to generate a tick interrupt.
+    */
+    static void prvSetupTimerInterrupt( void )
+    {
+        /* Enable the watchdog interrupt (set WDIE) and disable the system reset
+        (clear WDE). */
+        _WD_CONTROL_REG = ( 1 << WDIE );
 
-    ulCompareMatch = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
+        /* WDP0-2 are also cleared here to set the lowest timeout of 15 ms.
 
-    /* We only have 8 bits so have to scale to get our required tick rate. */
-    ulCompareMatch /= portCLOCK_PRESCALER;
+        WDP2    WDP1    WDP0 
+        0       0       0        15 ms
+        0       0       1        30 ms
+        0       1       0        60 ms
+        0       1       1       120 ms
+        1       0       0       250 ms
+        1       0       1       500 ms
+        1       1       0         1 s
+        1       1       1         2 s   */
+    }
 
-    /* Adjust for correct value. */
-    ulCompareMatch -= ( uint32_t ) 1;
+#else
 
-    /* Setup compare match value for compare match A.  Interrupts are disabled 
-    before this is called so we need not worry here. */
-    ucByte = ( uint8_t ) ( ulCompareMatch & ( uint32_t ) 0xff );
-    OCR2A = ucByte;
+    /*
+    * Setup timer 2 compare match A to generate a tick interrupt.
+    */
+    static void prvSetupTimerInterrupt( void )
+    {
+    uint32_t ulCompareMatch;
+    uint8_t ucByte;
 
-    /* Setup compare match behaviour. */
-    ucByte = portCLEAR_COUNTER_ON_MATCH;
-    TCCR2A |= ucByte;
+        /* Using 8bit timer 2 to generate the tick.  Correct fuses must be
+        selected for the configCPU_CLOCK_HZ clock. */
 
-    /* Setup clock source. */
-    ucByte = portPRESCALE_64;
-    TCCR2B |= ucByte;
+        ulCompareMatch = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
 
-    /* Enable the interrupt - this is okay as interrupt are currently globally
-    disabled. */
-    ucByte = TIMSK2;
-    ucByte |= portCOMPARE_MATCH_A_INTERRUPT_ENABLE;
-    TIMSK2 = ucByte;
-}
+        /* We only have 8 bits so have to scale to get our required tick rate. */
+        ulCompareMatch /= portCLOCK_PRESCALER;
+
+        /* Adjust for correct value. */
+        ulCompareMatch -= ( uint32_t ) 1;
+
+        /* Setup compare match value for compare match A.  Interrupts are disabled 
+        before this is called so we need not worry here. */
+        ucByte = ( uint8_t ) ( ulCompareMatch & ( uint32_t ) 0xff );
+        OCR2A = ucByte;
+
+        /* Setup compare match behaviour. */
+        ucByte = portCLEAR_COUNTER_ON_MATCH;
+        TCCR2A |= ucByte;
+
+        /* Setup clock source. */
+        ucByte = portPRESCALE_64;
+        TCCR2B |= ucByte;
+
+        /* Enable the interrupt - this is okay as interrupt are currently globally
+        disabled. */
+        ucByte = TIMSK2;
+        ucByte |= portCOMPARE_MATCH_A_INTERRUPT_ENABLE;
+        TIMSK2 = ucByte;
+    }
+
+#endif
 /*-----------------------------------------------------------*/
 
 #if configUSE_PREEMPTION == 1
@@ -528,12 +557,25 @@ uint8_t ucByte;
      * the context is saved at the start of vPortYieldFromTick().  The tick
      * count is incremented after the context is saved.
      */
-    ISR( TIMER2_COMPA_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
-    ISR( TIMER2_COMPA_vect )
-    {
-        vPortYieldFromTick();
-        asm volatile ( "reti" );
-    }
+    #if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+
+        ISR( WDT_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
+        ISR( WDT_vect )
+        {
+            vPortYieldFromTick();
+            asm volatile ( "reti" );
+        }
+
+    #else
+
+        ISR( TIMER2_COMPA_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
+        ISR( TIMER2_COMPA_vect )
+        {
+            vPortYieldFromTick();
+            asm volatile ( "reti" );
+        }
+
+    #endif
 
 #else
 
@@ -542,11 +584,25 @@ uint8_t ucByte;
      * tick count.  We don't need to switch context, this can only be done by
      * manual calls to taskYIELD();
      */
-    ISR( TIMER2_COMPA_vect ) __attribute__ ( ( signal ) );
-    ISR( TIMER2_COMPA_vect )
-    {
-        xTaskIncrementTick();
-    }
+    #if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+
+
+        ISR( WDT_vect ) __attribute__ ( ( signal ) );
+        ISR( WDT_vect )
+        {
+            xTaskIncrementTick();
+        }
+
+    #else
+
+        ISR( TIMER2_COMPA_vect ) __attribute__ ( ( signal ) );
+        ISR( TIMER2_COMPA_vect )
+        {
+            xTaskIncrementTick();
+        }
+
+    #endif
+
 #endif
 /*-----------------------------------------------------------*/
 
@@ -634,11 +690,11 @@ void initVariant( void )
     memory that is used by the Idle task. */
     void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,  StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
     {
-        /* If the buffers to be provided to the Idle task are declared inside
-        this function then they must be declared static - otherwise they will be
-        allocated on the stack and so not exists after this function exits. */
-        static StaticTask_t xIdleTaskTCB;
-        static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+    /* If the buffers to be provided to the Idle task are declared inside this
+    function then they must be declared static - otherwise they will be
+    allocated on the stack and so not exists after this function exits. */
+    static StaticTask_t xIdleTaskTCB;
+    static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
 
         /* Pass out a pointer to the StaticTask_t structure in which the Idle
         task's state will be stored. */
@@ -661,12 +717,11 @@ void initVariant( void )
         the Timer service task. */
         void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize )
         {
-            /* If the buffers to be provided to the Timer task are declared
-            inside this function then they must be declared static - otherwise
-            they will be allocated on the stack and so not exists after this
-            function exits. */
-            static StaticTask_t xTimerTaskTCB;
-            static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
+        /* If the buffers to be provided to the Timer task are declared inside
+        this function then they must be declared static - otherwise they will be
+        allocated on the stack and so not exists after this function exits. */
+        static StaticTask_t xTimerTaskTCB;
+        static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
 
             /* Pass out a pointer to the StaticTask_t structure in which the
             Timer task's state will be stored. */
