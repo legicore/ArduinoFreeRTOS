@@ -48,14 +48,25 @@ Changes from V2.6.0
  *----------------------------------------------------------*/
 
 /* Start tasks with interrupts enables. */
-#define portFLAGS_INT_ENABLED                   ( ( StackType_t ) 0x80 )
+#define portFLAGS_INT_ENABLED                       ( ( StackType_t ) 0x80 )
 
-/* Hardware constants for timer 2. */
-#define portCLEAR_COUNTER_ON_MATCH              ( ( uint8_t ) 0x02 )
-#define portPRESCALE_64                         ( ( uint8_t ) 0x04 )
-#define portCLOCK_PRESCALER                     ( ( uint32_t ) 64 )
-#define portCOMPARE_MATCH_A_INTERRUPT_ENABLE    ( ( uint8_t ) 0x02 )
+#if configMCU_TIMER == 2
 
+    /* Hardware constants for timer 2. */
+    #define portCLEAR_COUNTER_ON_MATCH              ( ( uint8_t ) 0x02 )
+    #define portPRESCALE_64                         ( ( uint8_t ) 0x04 )
+    #define portCLOCK_PRESCALER                     ( ( uint32_t ) 64 )
+    #define portCOMPARE_MATCH_A_INTERRUPT_ENABLE    ( ( uint8_t ) 0x02 )
+
+#elif configMCU_TIMER == 3
+
+    /* Hardware constants for timer 3. */
+    #define portCLEAR_COUNTER_ON_MATCH              ( ( uint8_t ) 0x08 )
+    #define portPRESCALE_64                         ( ( uint8_t ) 0x03 )
+    #define portCLOCK_PRESCALER                     ( ( uint32_t ) 64 )
+    #define portCOMPARE_MATCH_A_INTERRUPT_ENABLE    ( ( uint8_t ) 0x02 )
+
+#endif
 /*-----------------------------------------------------------*/
 
 /* We require the address of the pxCurrentTCB variable, but don't want to know
@@ -482,31 +493,19 @@ void vPortYieldFromTick( void )
 }
 /*-----------------------------------------------------------*/
 
-#if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#if configUSE_WATCHDOG_TICK == 1
 
     /*
     * Setup the watchdog to generate a tick interrupt.
     */
     static void prvSetupTimerInterrupt( void )
     {
-        /* Enable the watchdog interrupt (set WDIE) and disable the system reset
-        (clear WDE). */
-        _WD_CONTROL_REG = ( 1 << WDIE );
-
-        /* WDP0-2 are also cleared here to set the lowest timeout of 15 ms.
-
-        WDP2    WDP1    WDP0 
-        0       0       0        15 ms
-        0       0       1        30 ms
-        0       1       0        60 ms
-        0       1       1       120 ms
-        1       0       0       250 ms
-        1       0       1       500 ms
-        1       1       0         1 s
-        1       1       1         2 s   */
+        /* Enable the watchdog interrupt (set WDIE), disable the system reset
+        (clear WDE) and set 15 ms timeout (clear WDP0-2). */
+        _WD_CONTROL_REG = ( 1 << WDIE ) | ( 0 << WDE ) | ( 0 << WDP2 ) | ( 0 << WDP1 ) | ( 0 << WDP0 );
     }
 
-#else
+#elif configMCU_TIMER == 2
 
     /*
     * Setup timer 2 compare match A to generate a tick interrupt.
@@ -547,6 +546,53 @@ void vPortYieldFromTick( void )
         TIMSK2 = ucByte;
     }
 
+#elif configMCU_TIMER == 3
+
+    /*
+    * Setup timer 3 compare match A to generate a tick interrupt.
+    */
+    static void prvSetupTimerInterrupt( void )
+    {
+    uint32_t ulCompareMatch;
+    uint8_t ucHighByte, ucLowByte;
+
+        /* Using 16bit timer 3 to generate the tick.  Correct fuses must be
+        selected for the configCPU_CLOCK_HZ clock. */
+
+        ulCompareMatch = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
+
+        /* We only have 16 bits so have to scale to get our required tick rate. */
+        ulCompareMatch /= portCLOCK_PRESCALER;
+
+        /* Adjust for correct value. */
+        ulCompareMatch -= ( uint32_t ) 1;
+
+        /* Setup compare match value for compare match A.  Interrupts are disabled 
+        before this is called so we need not worry here. */
+        ucLowByte = ( uint8_t ) ( ulCompareMatch & ( uint32_t ) 0xff );
+        ulCompareMatch >>= 8;
+        ucHighByte = ( uint8_t ) ( ulCompareMatch & ( uint32_t ) 0xff );
+        OCR3AH = ucHighByte;
+        OCR3AL = ucLowByte;
+
+        /* Setup clock source and compare match behaviour. */
+        ucLowByte = portCLEAR_COUNTER_ON_MATCH | portPRESCALE_64;
+        TCCR3B = ucLowByte;
+
+        /* Enable the interrupt - this is okay as interrupt are currently globally
+        disabled. */
+        ucLowByte = TIMSK3;
+        ucLowByte |= portCOMPARE_MATCH_A_INTERRUPT_ENABLE;
+        TIMSK3 = ucLowByte;
+    }
+
+#else
+
+    static void prvSetupTimerInterrupt( void )
+    {
+        /* Dummy */
+    }
+
 #endif
 /*-----------------------------------------------------------*/
 
@@ -557,7 +603,7 @@ void vPortYieldFromTick( void )
      * the context is saved at the start of vPortYieldFromTick().  The tick
      * count is incremented after the context is saved.
      */
-    #if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+    #if configUSE_WATCHDOG_TICK == 1
 
         ISR( WDT_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
         ISR( WDT_vect )
@@ -566,10 +612,19 @@ void vPortYieldFromTick( void )
             asm volatile ( "reti" );
         }
 
-    #else
+    #elif configMCU_TIMER == 2
 
         ISR( TIMER2_COMPA_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
         ISR( TIMER2_COMPA_vect )
+        {
+            vPortYieldFromTick();
+            asm volatile ( "reti" );
+        }
+
+    #elif configMCU_TIMER == 3
+
+        ISR( TIMER3_COMPA_vect, ISR_NAKED ) __attribute__ ( ( signal, naked ) );
+        ISR( TIMER3_COMPA_vect )
         {
             vPortYieldFromTick();
             asm volatile ( "reti" );
@@ -584,8 +639,7 @@ void vPortYieldFromTick( void )
      * tick count.  We don't need to switch context, this can only be done by
      * manual calls to taskYIELD();
      */
-    #if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
-
+    #if configUSE_WATCHDOG_TICK == 1
 
         ISR( WDT_vect ) __attribute__ ( ( signal ) );
         ISR( WDT_vect )
@@ -593,10 +647,18 @@ void vPortYieldFromTick( void )
             xTaskIncrementTick();
         }
 
-    #else
+    #elif configMCU_TIMER == 2
 
         ISR( TIMER2_COMPA_vect ) __attribute__ ( ( signal ) );
         ISR( TIMER2_COMPA_vect )
+        {
+            xTaskIncrementTick();
+        }
+
+    #elif configMCU_TIMER == 3
+
+        ISR( TIMER3_COMPA_vect ) __attribute__ ( ( signal ) );
+        ISR( TIMER3_COMPA_vect )
         {
             xTaskIncrementTick();
         }
@@ -663,10 +725,9 @@ void vPortYieldFromTick( void )
 /*-----------------------------------------------------------*/
 
 /*
- * https://www.freertos.org/a00110.html
+ * Taken from https://www.freertos.org/a00110.html
  */
-
-#if configSUPPORT_STATIC_ALLOCATION >= 1
+#if configSUPPORT_STATIC_ALLOCATION == 1
 
     /* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must
     provide an implementation of vApplicationGetIdleTaskMemory() to provide the
@@ -692,7 +753,7 @@ void vPortYieldFromTick( void )
         *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
     }
 
-    #if configUSE_TIMERS >= 1
+    #if configUSE_TIMERS == 1
 
         /* configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to
         1, so the application must provide an implementation of

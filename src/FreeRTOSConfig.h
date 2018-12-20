@@ -43,12 +43,18 @@
  *----------------------------------------------------------*/
 
 /*
- * The Arduino port can use either the watchdog or the timer 2 interrupt to
+ * The Arduino port can use either the watchdog, timer 2 or timer 3 interrupt to
  * generate the system tick. Set configUSE_WATCHDOG_TICK to 1 to use the
- * watchdog, or 0 to use timer 2. In case of an Arduino Leonardo the watchdog
- * is automatically used.
+ * watchdog, or 0 to use timer 2 or 3 (depending on configMCU_TIMER).
  */
 #define configUSE_WATCHDOG_TICK                 0
+
+/*
+ * Timer 0 and 1 are used by the Arduino core library.
+ * Timer 2 is not available to Arduino Leonardo.
+ * Timer 3 is not available to Arduino Uno and (Pro) Micro.
+ */
+#define configMCU_TIMER                         2
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
@@ -116,11 +122,28 @@
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              0
 
-/* Set the tick rate. */
-#if configUSE_WATCHDOG_TICK == 1 || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+/* Check the timer configuration and set the tick rate. */
+#if configUSE_WATCHDOG_TICK == 1
+
+    /* TODO */
     #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 / 15 )
-#else
+
+#elif configMCU_TIMER == 2 \
+    && !defined(__AVR_ATmega32U4__) && !defined(__AVR_ATmega16U4__)
+
+    /* TODO */
     #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
+
+#elif configMCU_TIMER == 3 \
+    && !defined(__AVR_ATmega328P__) && !defined(__AVR_ATmega168__) && !defined(__AVR_ATmega8__)
+
+    /* TODO */
+    #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
+
+#elif configMCU_TIMER == 0 || configMCU_TIMER == 1
+    #error Timer 0 and 1 are used by the Arduino core library.
+#else
+    #error The selected timer is invalid or not available for this board type.
 #endif
 
 
