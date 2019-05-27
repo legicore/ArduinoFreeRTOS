@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V10.1.1
- * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.2.1
+ * Copyright (C) 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -52,23 +52,23 @@
 /*
  * Timer 0 and 1 are used by the Arduino core library.
  * Timer 2 is not available to Arduino Leonardo.
- * Timer 3 is not available to Arduino Uno and (Pro) Micro.
+ * Timer 3 is not available to Arduino Uno and (Pro) Mini.
  */
-#define configMCU_TIMER                         2
+#define configMCU_TIMER                         3
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
 #define configCPU_CLOCK_HZ                      ( ( uint32_t ) F_CPU )
 #define configMAX_PRIORITIES                    4
-#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 128 )
+#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 160 )
 #define configMAX_TASK_NAME_LEN                 8
 #define configUSE_16_BIT_TICKS                  1
-#define configIDLE_SHOULD_YIELD                 1
-#define configUSE_TASK_NOTIFICATIONS            1
-#define configUSE_MUTEXES                       1
-#define configUSE_RECURSIVE_MUTEXES             1
-#define configUSE_COUNTING_SEMAPHORES           1
+#define configIDLE_SHOULD_YIELD                 0
+#define configUSE_TASK_NOTIFICATIONS            0
+#define configUSE_MUTEXES                       0
+#define configUSE_RECURSIVE_MUTEXES             0
+#define configUSE_COUNTING_SEMAPHORES           0
 #define configQUEUE_REGISTRY_SIZE               0
 #define configUSE_QUEUE_SETS                    0
 #define configUSE_TIME_SLICING                  1
@@ -77,15 +77,15 @@
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 0
 
 /* Memory allocation related definitions. */
-#define configSUPPORT_STATIC_ALLOCATION         1
+#define configSUPPORT_STATIC_ALLOCATION         0
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
 /* Hook function related definitions. */
-#define configUSE_IDLE_HOOK                     1
+#define configUSE_IDLE_HOOK                     1   /* Arduino loop()! */
 #define configUSE_TICK_HOOK                     0
-#define configCHECK_FOR_STACK_OVERFLOW          1
-#define configUSE_MALLOC_FAILED_HOOK            1
+#define configCHECK_FOR_STACK_OVERFLOW          1   /* Debuggung */
+#define configUSE_MALLOC_FAILED_HOOK            1   /* Debuggung */
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      0
 
 /* Run time and task stats gathering related definitions. */
@@ -94,7 +94,7 @@
 #define configUSE_STATS_FORMATTING_FUNCTIONS    0
 
 /* Co-routine related definitions. */
-#define configUSE_CO_ROUTINES                   1
+#define configUSE_CO_ROUTINES                   0
 #define configMAX_CO_ROUTINE_PRIORITIES         ( 2 )
 
 /* Software timer related definitions. */
@@ -106,14 +106,14 @@
 /* Optional functions - most linkers will remove unused functions anyway. */
 #define INCLUDE_vTaskPrioritySet                0
 #define INCLUDE_uxTaskPriorityGet               0
-#define INCLUDE_vTaskDelete                     1
+#define INCLUDE_vTaskDelete                     0
 #define INCLUDE_vTaskSuspend                    0
 #define INCLUDE_xResumeFromISR                  0
-#define INCLUDE_vTaskDelayUntil                 1
+#define INCLUDE_vTaskDelayUntil                 0
 #define INCLUDE_vTaskDelay                      1
 #define INCLUDE_xTaskGetSchedulerState          0
 #define INCLUDE_xTaskGetCurrentTaskHandle       0
-#define INCLUDE_uxTaskGetStackHighWaterMark     1
+#define INCLUDE_uxTaskGetStackHighWaterMark     1   /* Debuggung */
 #define INCLUDE_xTaskGetIdleTaskHandle          0
 #define INCLUDE_eTaskGetState                   0
 #define INCLUDE_xEventGroupSetBitFromISR        0
@@ -122,25 +122,47 @@
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              0
 
+/* Set appropriate Heap size. */
+#if defined( __AVR_ATmega640__  ) || defined( __AVR_ATmega1280__ ) || \
+    defined( __AVR_ATmega1281__ ) || defined( __AVR_ATmega2560__ ) || \
+    defined( __AVR_ATmega2561__ )
+
+    /* Arduino Mega 2560 type. */
+    #define configTOTAL_HEAP_SIZE               ( ( size_t ) 3072 )
+
+#elif defined( __AVR_ATmega328P__ ) || defined( __AVR_ATmega168__ ) || \
+      defined( __AVR_ATmega8__    )
+
+    /* Arduino Uno type. */
+    #define configTOTAL_HEAP_SIZE               ( ( size_t ) 1280 )
+
+#elif defined( __AVR_ATmega32U4__ ) || defined( __AVR_ATmega16U4__ )
+
+    /* Arduino Leonardo type. */
+    #define configTOTAL_HEAP_SIZE               ( ( size_t ) 1280 )
+
+#endif
+
 /* Check the timer configuration and set the tick rate. */
 #if configUSE_WATCHDOG_TICK == 1
 
     /* TODO */
     #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 / 15 )
 
-#elif configMCU_TIMER == 2 \
-    && !defined(__AVR_ATmega32U4__) && !defined(__AVR_ATmega16U4__)
+#elif( configMCU_TIMER == 2 ) && \
+    !defined( __AVR_ATmega32U4__ ) && !defined( __AVR_ATmega16U4__ )
 
     /* TODO */
     #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
 
-#elif configMCU_TIMER == 3 \
-    && !defined(__AVR_ATmega328P__) && !defined(__AVR_ATmega168__) && !defined(__AVR_ATmega8__)
+#elif( configMCU_TIMER == 3 ) && \
+    !defined( __AVR_ATmega328P__ ) && !defined( __AVR_ATmega168__ ) && \
+    !defined( __AVR_ATmega8__    )
 
     /* TODO */
     #define configTICK_RATE_HZ                  ( ( TickType_t ) 1000 )
 
-#elif configMCU_TIMER == 0 || configMCU_TIMER == 1
+#elif( configMCU_TIMER == 0 ) || ( configMCU_TIMER == 1 )
     #error Timer 0 and 1 are used by the Arduino core library.
 #else
     #error The selected timer is invalid or not available for this board type.
