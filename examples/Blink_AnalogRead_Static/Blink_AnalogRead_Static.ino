@@ -8,11 +8,11 @@ void vTaskAnalogRead( void * pvParameters );
 
 #define blinkTASK_STACK_SIZE configMINIMAL_STACK_SIZE
 static StaticTask_t xTaskBlink;
-static StackType_t pxBlinkTaskStackBuffer[ blinkTASK_STACK_SIZE ];
+static StackType_t pxBlinkTaskStack[ blinkTASK_STACK_SIZE ];
 
 #define analogTASK_STACK_SIZE configMINIMAL_STACK_SIZE
 static StaticTask_t xTaskAnalogRead;
-static StackType_t pxAnalogTaskStackBuffer[ analogTASK_STACK_SIZE ];
+static StackType_t pxAnalogTaskStack[ analogTASK_STACK_SIZE ];
 
 /*-----------------------------------------------------------*/
 
@@ -29,11 +29,11 @@ void setup( void )
         blinkTASK_STACK_SIZE,   /* Wanted task stack size. */
         NULL,                   /* Task parameter (optional). */
         1,                      /* Task priority. */
-        pxBlinkTaskStackBuffer, /* Pointer to the task buffer. */
+        pxBlinkTaskStack,       /* Pointer to the task stack. */
         &xTaskBlink             /* Pointer to the task TCB. */
     );
 
-    xTaskCreateStatic( vTaskAnalogRead, "Analog", analogTASK_STACK_SIZE, NULL, 1, pxAnalogTaskStackBuffer, &xTaskAnalogRead );
+    xTaskCreateStatic( vTaskAnalogRead, "Analog", analogTASK_STACK_SIZE, NULL, 1, pxAnalogTaskStack, &xTaskAnalogRead );
 
     /* Start the kernel sheduler. */
     vTaskStartScheduler();
