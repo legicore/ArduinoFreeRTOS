@@ -88,6 +88,7 @@ typedef unsigned char UBaseType_t;
 #define portTICK_PERIOD_MS			( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT			1
 #define portNOP()					asm volatile ( "nop" );
+#define portMIN_DELAY               portTICK_PERIOD_MS
 /*-----------------------------------------------------------*/
 
 /* Kernel utilities. */
