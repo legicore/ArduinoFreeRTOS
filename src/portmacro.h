@@ -69,6 +69,7 @@ typedef unsigned char UBaseType_t;
 	typedef uint32_t TickType_t;
 	#define portMAX_DELAY ( TickType_t ) 0xffffffffUL
 #endif
+#define portMIN_DELAY portTICK_PERIOD_MS
 /*-----------------------------------------------------------*/
 
 /* Critical section management. */
@@ -88,7 +89,6 @@ typedef unsigned char UBaseType_t;
 #define portTICK_PERIOD_MS			( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT			1
 #define portNOP()					asm volatile ( "nop" );
-#define portMIN_DELAY               portTICK_PERIOD_MS
 /*-----------------------------------------------------------*/
 
 /* Kernel utilities. */
