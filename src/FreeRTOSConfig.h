@@ -1,5 +1,5 @@
 /*
- * FreeRTOS Kernel V10.2.1
+ * FreeRTOS Kernel V10.3.0
  * Copyright (C) 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -47,21 +47,21 @@
  * generate the system tick. Set configUSE_WATCHDOG_TICK to 1 to use the
  * watchdog, or 0 to use timer 2 or 3 (depending on configMCU_TIMER).
  */
-#define configUSE_WATCHDOG_TICK                 0
+#define configUSE_WATCHDOG_TICK                 1
 
 /*
  * Timer 0 and 1 are used by the Arduino core library.
  * Timer 2 is not available to Arduino Leonardo.
  * Timer 3 is not available to Arduino Uno and (Pro) Mini.
  */
-#define configMCU_TIMER                         3
+#define configMCU_TIMER                         2
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
 #define configCPU_CLOCK_HZ                      ( ( uint32_t ) F_CPU )
 #define configMAX_PRIORITIES                    4
-#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 160 )
+#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 128 )
 #define configMAX_TASK_NAME_LEN                 8
 #define configUSE_16_BIT_TICKS                  1
 #define configIDLE_SHOULD_YIELD                 0
@@ -77,7 +77,7 @@
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 0
 
 /* Memory allocation related definitions. */
-#define configSUPPORT_STATIC_ALLOCATION         0
+#define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
@@ -134,7 +134,7 @@
       defined( __AVR_ATmega8__    )
 
     /* Arduino Uno type. */
-    #define configTOTAL_HEAP_SIZE               ( ( size_t ) 1280 )
+    #define configTOTAL_HEAP_SIZE               ( ( size_t ) 1024 )
 
 #elif defined( __AVR_ATmega32U4__ ) || defined( __AVR_ATmega16U4__ )
 
