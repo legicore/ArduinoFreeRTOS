@@ -47,7 +47,7 @@
  * generate the system tick. Set configUSE_WATCHDOG_TICK to 1 to use the
  * watchdog, or 0 to use timer 2 or 3 (depending on configMCU_TIMER).
  */
-#define configUSE_WATCHDOG_TICK                 1
+#define configUSE_WATCHDOG_TICK                 0
 
 /*
  * Timer 0 and 1 are used by the Arduino core library.
