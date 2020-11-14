@@ -61,7 +61,7 @@
 #define configUSE_TICKLESS_IDLE                 0
 #define configCPU_CLOCK_HZ                      ( ( uint32_t ) F_CPU )
 #define configMAX_PRIORITIES                    ( 4 )
-#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 90 )
+#define configMINIMAL_STACK_SIZE                ( ( uint16_t ) 112 )
 #define configMAX_TASK_NAME_LEN                 ( 8 )
 #define configUSE_16_BIT_TICKS                  1
 #define configIDLE_SHOULD_YIELD                 0
