@@ -21,12 +21,13 @@
 
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_MEGA2560 ) || \
-    defined( ARDUINO_AVR_LEONARDO )
+    defined( ARDUINO_AVR_LEONARDO ) || \
+    defined( ARDUINO_AVR_PRO )
 
     #include "ATmega/portmacro.h"
 
 #elif defined( ARDUINO_AVR_NANO_EVERY ) || \
-    defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
     #include "AVR_Mega0/portmacro.h"
 

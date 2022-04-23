@@ -4,7 +4,7 @@
  * 
  * @author      Martin Legleiter
  * 
- * @brief       http://www.freertos.org/a00110.html
+ * @brief       https://www.freertos.org/a00110.html
  * 
  * @copyright   (c) 2022 Martin Legleiter
  * 
@@ -75,6 +75,9 @@
 #define configTIMER_QUEUE_LENGTH                    5
 #define configTIMER_TASK_STACK_DEPTH                configMINIMAL_STACK_SIZE
 
+/* Define to trap errors during development. */
+#define configASSERT( x ) if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }
+
 /* Optional functions - most linkers will remove unused functions anyway. */
 #define INCLUDE_vTaskPrioritySet                    0
 #define INCLUDE_uxTaskPriorityGet                   0
@@ -96,7 +99,7 @@
 
 /*-----------------------------------------------------------*/
 
-/* Seet the tick rate for (supported) AVR Mega0 devices. (For other/standard
+/* Set the tick rate for (supported) AVR Mega0 devices. (For other/standard
 ATmega devices, the (enhanced) WDT is used by default.) */
 #if defined( ARDUINO_AVR_NANO_EVERY ) || \
     defined( ARDUINO_AVR_UNO_WIFI_REV2 )
@@ -111,7 +114,8 @@ ATmega devices, the (enhanced) WDT is used by default.) */
 /*-----------------------------------------------------------*/
 
 /* Set appropriate Heap size. */
-#if defined( ARDUINO_AVR_UNO )
+#if defined( ARDUINO_AVR_UNO ) || \
+    defined( ARDUINO_AVR_PRO )
 
     #define configTOTAL_HEAP_SIZE                   ( ( size_t ) 768 )
 
@@ -124,10 +128,6 @@ ATmega devices, the (enhanced) WDT is used by default.) */
       defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
     #define configTOTAL_HEAP_SIZE                   ( ( size_t ) 3072 )
-
-#else
-
-    #error The currently selected board is not supported by this port of FreeRTOS
 
 #endif
 

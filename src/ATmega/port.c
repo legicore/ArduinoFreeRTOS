@@ -28,7 +28,8 @@
 
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_MEGA2560 ) || \
-    defined( ARDUINO_AVR_LEONARDO )
+    defined( ARDUINO_AVR_LEONARDO ) || \
+    defined( ARDUINO_AVR_PRO )
 
 #include <stdlib.h>
 
