@@ -14,10 +14,15 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FREERTOS_CONFIG_H
-#define FREERTOS_CONFIG_H
+#ifndef __FREERTOS_CONFIG_H__
+#define __FREERTOS_CONFIG_H__
 
-#include <avr/io.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#include "FreeRTOS.h"
+
+#include <Arduino.h>
 
 /*-----------------------------------------------------------*/
 
@@ -29,7 +34,7 @@
 #define configMAX_PRIORITIES                        ( 4 )
 #define configMINIMAL_STACK_SIZE                    ( ( uint16_t ) 112 )
 #define configMAX_TASK_NAME_LEN                     ( 8 )
-#define configUSE_16_BIT_TICKS                      1
+#define configUSE_16_BIT_TICKS                      0
 #define configIDLE_SHOULD_YIELD                     1
 #define configUSE_TASK_NOTIFICATIONS                1
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES       1
@@ -99,38 +104,44 @@
 
 /*-----------------------------------------------------------*/
 
-/* Set the tick rate for (supported) AVR Mega0 devices. (For other/standard
-ATmega devices, the (enhanced) WDT is used by default.) */
-#if defined( ARDUINO_AVR_NANO_EVERY ) || \
-    defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+/* Set the tick rate for (supported) devices. */
+#if defined( ARDUINO_AVR_UNO ) || \
+    defined( ARDUINO_AVR_LEONARDO ) || \
+    defined( ARDUINO_AVR_MEGA2560 ) || \
+    defined( ARDUINO_AVR_PRO )
+
+    /* These devices are using the watchdog timer interrupt to generate the
+    system ticks, which results in a different/lower tick rate. */
+    #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 / portTICK_PERIOD_MS )
+
+#elif defined( ARDUINO_AVR_NANO_EVERY ) || \
+      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
     /* The most Arduino core libraries are using the timers 0 - 3. So for the
     more capeable AVR Mega0 devices we are using timer 4.*/
-    #define configUSE_TIMER_INSTANCE                4
-    #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
+    #define configUSE_TIMER_INSTANCE    4
+    #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
 
 #endif
-
 /*-----------------------------------------------------------*/
 
 /* Set appropriate Heap size. */
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_PRO )
 
-    #define configTOTAL_HEAP_SIZE                   ( ( size_t ) 768 )
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 768 )
 
 #elif defined( ARDUINO_AVR_LEONARDO )
 
-    #define configTOTAL_HEAP_SIZE                   ( ( size_t ) 1024 )
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 1024 )
 
 #elif defined( ARDUINO_AVR_MEGA2560 ) || \
       defined( ARDUINO_AVR_NANO_EVERY ) || \
       defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
-    #define configTOTAL_HEAP_SIZE                   ( ( size_t ) 3072 )
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 2048 )
 
 #endif
-
 /*-----------------------------------------------------------*/
 
-#endif /* FREERTOS_CONFIG_H */
+#endif /* __FREERTOS_CONFIG_H__ */
