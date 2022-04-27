@@ -33,14 +33,8 @@
 
 #else
 
-    #error The currently selected board is not supported by this port of FreeRTOS
+    #error "The currently selected board is not supported by this port of FreeRTOS"
 
 #endif
-
-/*-----------------------------------------------------------*/
-
-#define portMIN_DELAY   portTICK_PERIOD_MS
-
-/*-----------------------------------------------------------*/
 
 #endif /* __PORTMACRO_H__ */

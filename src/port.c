@@ -15,8 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
-#include <avr/interrupt.h>
-#include <avr/wdt.h>
+#include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "task.h"

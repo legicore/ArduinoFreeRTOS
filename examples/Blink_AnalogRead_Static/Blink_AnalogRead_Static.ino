@@ -60,7 +60,7 @@ void vTaskBlink( void * pvParameters )
         /* Toggle the built in LED. */
         digitalWrite( LED_BUILTIN, digitalRead( LED_BUILTIN ) ^ 1 );
 
-        /*  */
+        /* Delay the task 1000ms to create a 1Hz blinking. */
         vTaskDelay( 1000 / portTICK_PERIOD_MS );
     }
 }
@@ -79,7 +79,7 @@ void vTaskAnalogRead( void * pvParameters )
         sAnalogValue = analogRead( A0 );
         Serial.println( sAnalogValue );
 
-        /* Short delay (1 tick) for stability. */
+        /* Short delay for stability. */
         vTaskDelay( 1 );
     }
 }
