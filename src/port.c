@@ -6,7 +6,7 @@
  * 
  * @brief       https://www.freertos.org/a00110.html
  * 
- * @copyright   (c) 2022 Martin Legleiter
+ * @copyright   (c) 2023 Martin Legleiter
  * 
  * @license     Use of this source code is governed by an MIT-style
  *              license that can be found in the LICENSE file or at

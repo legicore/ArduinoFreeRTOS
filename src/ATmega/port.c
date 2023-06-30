@@ -1,5 +1,5 @@
 /*
- * FreeRTOS Kernel V10.4.6
+ * FreeRTOS Kernel V10.5.1
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
@@ -65,14 +65,16 @@
     #define portTIMSK                   TIMSK0
     #define portTIFR                    TIFR0
 
+#else
+    #error "No Timer defined for scheduler"
 #endif
 
 /*-----------------------------------------------------------*/
 
 /* We require the address of the pxCurrentTCB variable, but don't want to know
 any details of its type. */
-typedef void FreeRTOS_TCB_t;
-extern volatile FreeRTOS_TCB_t * volatile pxCurrentTCB;
+typedef void TCB_t;
+extern volatile TCB_t * volatile pxCurrentTCB;
 
 /*-----------------------------------------------------------*/
 

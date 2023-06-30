@@ -20,6 +20,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    extern "C" {
+#endif
+/* *INDENT-ON* */
+
 #include "FreeRTOS.h"
 
 #include <Arduino.h>
@@ -34,11 +40,11 @@
 #define configMAX_PRIORITIES                        ( 4 )
 #define configMINIMAL_STACK_SIZE                    ( ( uint16_t ) 112 )
 #define configMAX_TASK_NAME_LEN                     ( 8 )
-#define configUSE_16_BIT_TICKS                      0
+#define configUSE_16_BIT_TICKS                      1 /* Must be 0 for pdMS_TO_TICKS() to work correctly with big delay values! */
 #define configIDLE_SHOULD_YIELD                     1
 #define configUSE_TASK_NOTIFICATIONS                1
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES       1
-#define configUSE_MUTEXES                           0
+#define configUSE_MUTEXES                           1 /* Should be used for Serial prints in different tasks! */
 #define configUSE_RECURSIVE_MUTEXES                 0
 #define configUSE_COUNTING_SEMAPHORES               0
 #define configUSE_ALTERNATIVE_API                   0 /* Deprecated! */
@@ -77,7 +83,7 @@
 /* Software timer related definitions. */
 #define configUSE_TIMERS                            1
 #define configTIMER_TASK_PRIORITY                   ( configMAX_PRIORITIES - 1 )
-#define configTIMER_QUEUE_LENGTH                    5
+#define configTIMER_QUEUE_LENGTH                    ( 5 )
 #define configTIMER_TASK_STACK_DEPTH                configMINIMAL_STACK_SIZE
 
 /* Define to trap errors during development. */
@@ -92,7 +98,7 @@
 #define INCLUDE_vTaskDelayUntil                     1
 #define INCLUDE_vTaskDelay                          1
 #define INCLUDE_xTaskGetSchedulerState              0
-#define INCLUDE_xTaskGetCurrentTaskHandle           0
+#define INCLUDE_xTaskGetCurrentTaskHandle           1
 #define INCLUDE_uxTaskGetStackHighWaterMark         1 /* Debugging */
 #define INCLUDE_xTaskGetIdleTaskHandle              0
 #define INCLUDE_eTaskGetState                       0
@@ -104,7 +110,7 @@
 
 /*-----------------------------------------------------------*/
 
-/* Set the tick rate for (supported) devices. */
+/* Set the tick rate for the supported devices. */
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_LEONARDO ) || \
     defined( ARDUINO_AVR_MEGA2560 ) || \
@@ -117,15 +123,17 @@
 #elif defined( ARDUINO_AVR_NANO_EVERY ) || \
       defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
-    /* The most Arduino core libraries are using the timers 0 - 3. So for the
-    more capeable AVR Mega0 devices we are using timer 4.*/
-    #define configUSE_TIMER_INSTANCE    4
+    /* The Arduino core implementation uses Timer0 (8 bit) for functions like
+    delay(), millis(), etc., Timer1 (16 bit) for some libraries like the Servo
+    library and Timer2 (8 bit) for the tone() function. So for the more capeable
+    megaavr devices we are using Timer3 (16 bit). */
+    #define configUSE_TIMER_INSTANCE    3
     #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
 
 #endif
 /*-----------------------------------------------------------*/
 
-/* Set appropriate Heap size. */
+/* Set appropriate heap size for the supported devices. */
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_PRO )
 
@@ -143,5 +151,11 @@
 
 #endif
 /*-----------------------------------------------------------*/
+
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    }
+#endif
+/* *INDENT-ON* */
 
 #endif /* __FREERTOS_CONFIG_H__ */

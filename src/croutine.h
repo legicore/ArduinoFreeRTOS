@@ -1,5 +1,5 @@
 /*
- * FreeRTOS Kernel V10.4.6
+ * FreeRTOS Kernel V10.5.1
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
@@ -58,7 +58,7 @@ typedef struct corCoRoutineControlBlock
     UBaseType_t uxPriority;      /*< The priority of the co-routine in relation to other co-routines. */
     UBaseType_t uxIndex;         /*< Used to distinguish between co-routines when multiple co-routines use the same co-routine function. */
     uint16_t uxState;            /*< Used internally by the co-routine implementation. */
-} CRCB_t;                        /* Co-routine control block.  Note must be identical in size down to uxPriority with FreeRTOS_TCB_t. */
+} CRCB_t;                        /* Co-routine control block.  Note must be identical in size down to uxPriority with TCB_t. */
 
 /**
  * croutine. h
