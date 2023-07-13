@@ -38,4 +38,9 @@
 #endif
 /*-----------------------------------------------------------*/
 
+#if( configUSE_IDLE_HOOK == 0 )
+    #error configUSE_IDLE_HOOK must be set to 1 for this port.
+#endif
+/*-----------------------------------------------------------*/
+
 #endif /* __PORTMACRO_H__ */
