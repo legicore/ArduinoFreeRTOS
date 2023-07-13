@@ -32,13 +32,24 @@
 
 /*-----------------------------------------------------------*/
 
+#if defined( ARDUINO_MINIMA ) || \
+    defined( ARDUINO_UNOWIFIR4 )
+
+    #include "bsp_api.h"
+
+    #define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY    ( 1 )
+    #define configMAX_SYSCALL_INTERRUPT_PRIORITY            ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << ( 8 - __NVIC_PRIO_BITS ) )
+
+#endif
+/*-----------------------------------------------------------*/
+
 #define configUSE_PREEMPTION                        1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION     0
 #define configUSE_TICKLESS_IDLE                     0
 #define configCPU_CLOCK_HZ                          ( ( uint32_t ) F_CPU )
 //#define configTICK_RATE_HZ
 #define configMAX_PRIORITIES                        ( 4 )
-#define configMINIMAL_STACK_SIZE                    ( ( uint16_t ) 112 )
+#define configMINIMAL_STACK_SIZE                    ( ( uint16_t ) 192 )
 #define configMAX_TASK_NAME_LEN                     ( 8 )
 #define configUSE_16_BIT_TICKS                      1 /* Must be 0 for pdMS_TO_TICKS() to work correctly with big delay values! */
 #define configIDLE_SHOULD_YIELD                     1
@@ -50,7 +61,7 @@
 #define configUSE_ALTERNATIVE_API                   0 /* Deprecated! */
 #define configQUEUE_REGISTRY_SIZE                   0
 #define configUSE_QUEUE_SETS                        0
-#define configUSE_TIME_SLICING                      1
+#define configUSE_TIME_SLICING                      0
 #define configUSE_NEWLIB_REENTRANT                  0
 #define configENABLE_BACKWARD_COMPATIBILITY         0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS     0
@@ -100,7 +111,7 @@
 #define INCLUDE_xTaskGetSchedulerState              0
 #define INCLUDE_xTaskGetCurrentTaskHandle           1
 #define INCLUDE_uxTaskGetStackHighWaterMark         1 /* Debugging */
-#define INCLUDE_xTaskGetIdleTaskHandle              0
+#define INCLUDE_xTaskGetIdleTaskHandle              1 /* Debugging */
 #define INCLUDE_eTaskGetState                       0
 #define INCLUDE_xEventGroupSetBitFromISR            0
 #define INCLUDE_xTimerPendFunctionCall              0
@@ -130,6 +141,11 @@
     #define configUSE_TIMER_INSTANCE    3
     #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
 
+#elif defined( ARDUINO_MINIMA ) || \
+      defined( ARDUINO_UNOWIFIR4 )
+
+    #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
+
 #endif
 /*-----------------------------------------------------------*/
 
@@ -148,6 +164,11 @@
       defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 2048 )
+
+#elif defined( ARDUINO_MINIMA ) || \
+      defined( ARDUINO_UNOWIFIR4 )
+
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 8192 )
 
 #endif
 /*-----------------------------------------------------------*/
