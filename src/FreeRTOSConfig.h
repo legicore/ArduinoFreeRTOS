@@ -131,16 +131,6 @@
     system ticks, which results in a different/lower tick rate. */
     #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 / portTICK_PERIOD_MS )
 
-#elif defined( ARDUINO_AVR_NANO_EVERY ) || \
-      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
-
-    /* The Arduino core implementation uses Timer0 (8 bit) for functions like
-    delay(), millis(), etc., Timer1 (16 bit) for some libraries like the Servo
-    library and Timer2 (8 bit) for the tone() function. So for the more capeable
-    megaavr devices we are using Timer3 (16 bit). */
-    #define configUSE_TIMER_INSTANCE    3
-    #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
-
 #elif defined( ARDUINO_MINIMA ) || \
       defined( ARDUINO_UNOWIFIR4 )
 
@@ -159,9 +149,7 @@
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 1024 )
 
-#elif defined( ARDUINO_AVR_MEGA2560 ) || \
-      defined( ARDUINO_AVR_NANO_EVERY ) || \
-      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+#elif defined( ARDUINO_AVR_MEGA2560 )
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 2048 )
 

@@ -26,11 +26,6 @@
 
     #include "ATmega/portmacro.h"
 
-#elif defined( ARDUINO_AVR_NANO_EVERY ) || \
-      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
-
-    #include "AVR_Mega0/portmacro.h"
-
 #elif defined( ARDUINO_MINIMA ) || \
       defined( ARDUINO_UNOWIFIR4 )
 
