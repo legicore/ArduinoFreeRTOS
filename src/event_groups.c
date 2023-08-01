@@ -37,7 +37,7 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "timers.h"
+#include "timersFreeRTOS.h"
 #include "event_groups.h"
 
 /* Lint e961, e750 and e9021 are suppressed as a MISRA exception justified

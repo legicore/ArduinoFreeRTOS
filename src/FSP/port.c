@@ -32,10 +32,10 @@
 
 /* Scheduler includes. */
 #include "bsp_api.h"
-// #include "FreeRTOSConfig.h"
-// #include "../../lib/FreeRTOS-Kernel-v10.5.1/FreeRTOS.h"
-// #include "../../lib/FreeRTOS-Kernel-v10.5.1/task.h"
+// CHANGE #include "FreeRTOSConfig.h"
+// CHANGE #include "../../lib/FreeRTOS-Kernel-v10.5.1/FreeRTOS.h"
 #include "FreeRTOS.h"
+// CHANGE #include "../../lib/FreeRTOS-Kernel-v10.5.1/task.h"
 #include "task.h"
 
 #if BSP_TZ_NONSECURE_BUILD

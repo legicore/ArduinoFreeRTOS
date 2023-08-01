@@ -34,6 +34,11 @@
     https://github.com/arduino/ArduinoCore-renesas/tree/main/libraries/Arduino_FreeRTOS */
     #include "FSP/portmacro.h"
 
+#elif defined( ARDUINO_AVR_NANO_EVERY ) || \
+      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+
+    #include "AVR_Mega0/portmacro.h"
+
 #else
 
     #error "The currently selected board is not supported by this port of FreeRTOS"

@@ -38,7 +38,7 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "timers.h"
+#include "timersFreeRTOS.h"
 #include "stack_macros.h"
 
 /* Lint e9021, e961 and e750 are suppressed as a MISRA exception justified
@@ -320,13 +320,13 @@ typedef struct tskTaskControlBlock       /* The old naming convention is used to
     #endif
 } tskTCB;
 
-/* The old tskTCB name is maintained above then typedefed to the new TCB_t name
+/* The old tskTCB name is maintained above then typedefed to the new FreeRTOS_TCB_t name
  * below to enable the use of older kernel aware debuggers. */
-typedef tskTCB TCB_t;
+typedef tskTCB FreeRTOS_TCB_t;
 
 /*lint -save -e956 A manual analysis and inspection has been used to determine
  * which static variables must be declared volatile. */
-portDONT_DISCARD PRIVILEGED_DATA TCB_t * volatile pxCurrentTCB = NULL;
+portDONT_DISCARD PRIVILEGED_DATA FreeRTOS_TCB_t * volatile pxCurrentTCB = NULL;
 
 /* Lists for ready and blocked tasks. --------------------
  * xDelayedTaskList1 and xDelayedTaskList2 could be moved to function scope but
@@ -439,7 +439,7 @@ static portTASK_FUNCTION_PROTO( prvIdleTask, pvParameters ) PRIVILEGED_FUNCTION;
  */
 #if ( INCLUDE_vTaskDelete == 1 )
 
-    static void prvDeleteTCB( TCB_t * pxTCB ) PRIVILEGED_FUNCTION;
+    static void prvDeleteTCB( FreeRTOS_TCB_t * pxTCB ) PRIVILEGED_FUNCTION;
 
 #endif
 
@@ -479,7 +479,7 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
  */
 #if ( INCLUDE_xTaskGetHandle == 1 )
 
-    static TCB_t * prvSearchForNameWithinSingleList( List_t * pxList,
+    static FreeRTOS_TCB_t * prvSearchForNameWithinSingleList( List_t * pxList,
                                                      const char pcNameToQuery[] ) PRIVILEGED_FUNCTION;
 
 #endif
@@ -537,14 +537,14 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
                                   void * const pvParameters,
                                   UBaseType_t uxPriority,
                                   TaskHandle_t * const pxCreatedTask,
-                                  TCB_t * pxNewTCB,
+                                  FreeRTOS_TCB_t * pxNewTCB,
                                   const MemoryRegion_t * const xRegions ) PRIVILEGED_FUNCTION;
 
 /*
  * Called after a new task has been created and initialised to place the task
  * under the control of the scheduler.
  */
-static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
+static void prvAddNewTaskToReadyList( FreeRTOS_TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
 
 /*
  * freertos_tasks_c_additions_init() should only be called if the user definable
@@ -569,7 +569,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
                                     StackType_t * const puxStackBuffer,
                                     StaticTask_t * const pxTaskBuffer )
     {
-        TCB_t * pxNewTCB;
+        FreeRTOS_TCB_t * pxNewTCB;
         TaskHandle_t xReturn;
 
         configASSERT( puxStackBuffer != NULL );
@@ -581,7 +581,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
              * variable of type StaticTask_t equals the size of the real task
              * structure. */
             volatile size_t xSize = sizeof( StaticTask_t );
-            configASSERT( xSize == sizeof( TCB_t ) );
+            configASSERT( xSize == sizeof( FreeRTOS_TCB_t ) );
             ( void ) xSize; /* Prevent lint warning when configASSERT() is not used. */
         }
         #endif /* configASSERT_DEFINED */
@@ -590,8 +590,8 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
         {
             /* The memory used for the task's TCB and stack are passed into this
              * function - use them. */
-            pxNewTCB = ( TCB_t * ) pxTaskBuffer; /*lint !e740 !e9087 Unusual cast is ok as the structures are designed to have the same alignment, and the size is checked by an assert. */
-            memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+            pxNewTCB = ( FreeRTOS_TCB_t * ) pxTaskBuffer; /*lint !e740 !e9087 Unusual cast is ok as the structures are designed to have the same alignment, and the size is checked by an assert. */
+            memset( ( void * ) pxNewTCB, 0x00, sizeof( FreeRTOS_TCB_t ) );
             pxNewTCB->pxStack = ( StackType_t * ) puxStackBuffer;
 
             #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 ) /*lint !e731 !e9029 Macro has been consolidated for readability reasons. */
@@ -621,7 +621,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
     BaseType_t xTaskCreateRestrictedStatic( const TaskParameters_t * const pxTaskDefinition,
                                             TaskHandle_t * pxCreatedTask )
     {
-        TCB_t * pxNewTCB;
+        FreeRTOS_TCB_t * pxNewTCB;
         BaseType_t xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
 
         configASSERT( pxTaskDefinition->puxStackBuffer != NULL );
@@ -632,8 +632,8 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             /* Allocate space for the TCB.  Where the memory comes from depends
              * on the implementation of the port malloc function and whether or
              * not static allocation is being used. */
-            pxNewTCB = ( TCB_t * ) pxTaskDefinition->pxTaskBuffer;
-            memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+            pxNewTCB = ( FreeRTOS_TCB_t * ) pxTaskDefinition->pxTaskBuffer;
+            memset( ( void * ) pxNewTCB, 0x00, sizeof( FreeRTOS_TCB_t ) );
 
             /* Store the stack location in the TCB. */
             pxNewTCB->pxStack = pxTaskDefinition->puxStackBuffer;
@@ -669,7 +669,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
     BaseType_t xTaskCreateRestricted( const TaskParameters_t * const pxTaskDefinition,
                                       TaskHandle_t * pxCreatedTask )
     {
-        TCB_t * pxNewTCB;
+        FreeRTOS_TCB_t * pxNewTCB;
         BaseType_t xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
 
         configASSERT( pxTaskDefinition->puxStackBuffer );
@@ -679,11 +679,11 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             /* Allocate space for the TCB.  Where the memory comes from depends
              * on the implementation of the port malloc function and whether or
              * not static allocation is being used. */
-            pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) );
+            pxNewTCB = ( FreeRTOS_TCB_t * ) pvPortMalloc( sizeof( FreeRTOS_TCB_t ) );
 
             if( pxNewTCB != NULL )
             {
-                memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+                memset( ( void * ) pxNewTCB, 0x00, sizeof( FreeRTOS_TCB_t ) );
 
                 /* Store the stack location in the TCB. */
                 pxNewTCB->pxStack = pxTaskDefinition->puxStackBuffer;
@@ -725,7 +725,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
                             UBaseType_t uxPriority,
                             TaskHandle_t * const pxCreatedTask )
     {
-        TCB_t * pxNewTCB;
+        FreeRTOS_TCB_t * pxNewTCB;
         BaseType_t xReturn;
 
         /* If the stack grows down then allocate the stack then the TCB so the stack
@@ -736,11 +736,11 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             /* Allocate space for the TCB.  Where the memory comes from depends on
              * the implementation of the port malloc function and whether or not static
              * allocation is being used. */
-            pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) );
+            pxNewTCB = ( FreeRTOS_TCB_t * ) pvPortMalloc( sizeof( FreeRTOS_TCB_t ) );
 
             if( pxNewTCB != NULL )
             {
-                memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+                memset( ( void * ) pxNewTCB, 0x00, sizeof( FreeRTOS_TCB_t ) );
 
                 /* Allocate space for the stack used by the task being created.
                  * The base of the stack memory stored in the TCB so the task can
@@ -765,11 +765,11 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             if( pxStack != NULL )
             {
                 /* Allocate space for the TCB. */
-                pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) ); /*lint !e9087 !e9079 All values returned by pvPortMalloc() have at least the alignment required by the MCU's stack, and the first member of TCB_t is always a pointer to the task's stack. */
+                pxNewTCB = ( FreeRTOS_TCB_t * ) pvPortMalloc( sizeof( FreeRTOS_TCB_t ) ); /*lint !e9087 !e9079 All values returned by pvPortMalloc() have at least the alignment required by the MCU's stack, and the first member of FreeRTOS_TCB_t is always a pointer to the task's stack. */
 
                 if( pxNewTCB != NULL )
                 {
-                    memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+                    memset( ( void * ) pxNewTCB, 0x00, sizeof( FreeRTOS_TCB_t ) );
 
                     /* Store the stack location in the TCB. */
                     pxNewTCB->pxStack = pxStack;
@@ -819,7 +819,7 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
                                   void * const pvParameters,
                                   UBaseType_t uxPriority,
                                   TaskHandle_t * const pxCreatedTask,
-                                  TCB_t * pxNewTCB,
+                                  FreeRTOS_TCB_t * pxNewTCB,
                                   const MemoryRegion_t * const xRegions )
 {
     StackType_t * pxTopOfStack;
@@ -1023,7 +1023,7 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
 }
 /*-----------------------------------------------------------*/
 
-static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
+static void prvAddNewTaskToReadyList( FreeRTOS_TCB_t * pxNewTCB )
 {
     /* Ensure interrupts don't access the task lists while the lists are being
      * updated. */
@@ -1111,7 +1111,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     void vTaskDelete( TaskHandle_t xTaskToDelete )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         taskENTER_CRITICAL();
         {
@@ -1349,7 +1349,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
         List_t const * pxStateList;
         List_t const * pxDelayedList;
         List_t const * pxOverflowedDelayedList;
-        const TCB_t * const pxTCB = xTask;
+        const FreeRTOS_TCB_t * const pxTCB = xTask;
 
         configASSERT( pxTCB );
 
@@ -1444,7 +1444,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     UBaseType_t uxTaskPriorityGet( const TaskHandle_t xTask )
     {
-        TCB_t const * pxTCB;
+        FreeRTOS_TCB_t const * pxTCB;
         UBaseType_t uxReturn;
 
         taskENTER_CRITICAL();
@@ -1466,7 +1466,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     UBaseType_t uxTaskPriorityGetFromISR( const TaskHandle_t xTask )
     {
-        TCB_t const * pxTCB;
+        FreeRTOS_TCB_t const * pxTCB;
         UBaseType_t uxReturn, uxSavedInterruptState;
 
         /* RTOS ports that support interrupt nesting have the concept of a
@@ -1507,7 +1507,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
     void vTaskPrioritySet( TaskHandle_t xTask,
                            UBaseType_t uxNewPriority )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         UBaseType_t uxCurrentBasePriority, uxPriorityUsedOnEntry;
         BaseType_t xYieldRequired = pdFALSE;
 
@@ -1672,7 +1672,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     void vTaskSuspend( TaskHandle_t xTaskToSuspend )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         taskENTER_CRITICAL();
         {
@@ -1779,7 +1779,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
     static BaseType_t prvTaskIsTaskSuspended( const TaskHandle_t xTask )
     {
         BaseType_t xReturn = pdFALSE;
-        const TCB_t * const pxTCB = xTask;
+        const FreeRTOS_TCB_t * const pxTCB = xTask;
 
         /* Accesses xPendingReadyList so must be called from a critical
          * section. */
@@ -1824,7 +1824,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     void vTaskResume( TaskHandle_t xTaskToResume )
     {
-        TCB_t * const pxTCB = xTaskToResume;
+        FreeRTOS_TCB_t * const pxTCB = xTaskToResume;
 
         /* It does not make sense to resume the calling task. */
         configASSERT( xTaskToResume );
@@ -1879,7 +1879,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
     BaseType_t xTaskResumeFromISR( TaskHandle_t xTaskToResume )
     {
         BaseType_t xYieldRequired = pdFALSE;
-        TCB_t * const pxTCB = xTaskToResume;
+        FreeRTOS_TCB_t * const pxTCB = xTaskToResume;
         UBaseType_t uxSavedInterruptStatus;
 
         configASSERT( xTaskToResume );
@@ -2173,7 +2173,7 @@ void vTaskSuspendAll( void )
 
 BaseType_t xTaskResumeAll( void )
 {
-    TCB_t * pxTCB = NULL;
+    FreeRTOS_TCB_t * pxTCB = NULL;
     BaseType_t xAlreadyYielded = pdFALSE;
 
     /* If uxSchedulerSuspended is zero then this function does not match a
@@ -2339,7 +2339,7 @@ UBaseType_t uxTaskGetNumberOfTasks( void )
 
 char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
 {
-    TCB_t * pxTCB;
+    FreeRTOS_TCB_t * pxTCB;
 
     /* If null is passed in here then the name of the calling task is being
      * queried. */
@@ -2351,12 +2351,12 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
 
 #if ( INCLUDE_xTaskGetHandle == 1 )
 
-    static TCB_t * prvSearchForNameWithinSingleList( List_t * pxList,
+    static FreeRTOS_TCB_t * prvSearchForNameWithinSingleList( List_t * pxList,
                                                      const char pcNameToQuery[] )
     {
-        TCB_t * pxNextTCB;
-        TCB_t * pxFirstTCB;
-        TCB_t * pxReturn = NULL;
+        FreeRTOS_TCB_t * pxNextTCB;
+        FreeRTOS_TCB_t * pxFirstTCB;
+        FreeRTOS_TCB_t * pxReturn = NULL;
         UBaseType_t x;
         char cNextChar;
         BaseType_t xBreakLoop;
@@ -2425,7 +2425,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char 
     TaskHandle_t xTaskGetHandle( const char * pcNameToQuery ) /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
     {
         UBaseType_t uxQueue = configMAX_PRIORITIES;
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         /* Task names will be truncated to configMAX_TASK_NAME_LEN - 1 bytes. */
         configASSERT( strlen( pcNameToQuery ) < configMAX_TASK_NAME_LEN );
@@ -2641,7 +2641,7 @@ BaseType_t xTaskCatchUpTicks( TickType_t xTicksToCatchUp )
 
     BaseType_t xTaskAbortDelay( TaskHandle_t xTask )
     {
-        TCB_t * pxTCB = xTask;
+        FreeRTOS_TCB_t * pxTCB = xTask;
         BaseType_t xReturn;
 
         configASSERT( pxTCB );
@@ -2719,7 +2719,7 @@ BaseType_t xTaskCatchUpTicks( TickType_t xTicksToCatchUp )
 
 BaseType_t xTaskIncrementTick( void )
 {
-    TCB_t * pxTCB;
+    FreeRTOS_TCB_t * pxTCB;
     TickType_t xItemValue;
     BaseType_t xSwitchRequired = pdFALSE;
 
@@ -2899,13 +2899,13 @@ BaseType_t xTaskIncrementTick( void )
     void vTaskSetApplicationTaskTag( TaskHandle_t xTask,
                                      TaskHookFunction_t pxHookFunction )
     {
-        TCB_t * xTCB;
+        FreeRTOS_TCB_t * xTCB;
 
         /* If xTask is NULL then it is the task hook of the calling task that is
          * getting set. */
         if( xTask == NULL )
         {
-            xTCB = ( TCB_t * ) pxCurrentTCB;
+            xTCB = ( FreeRTOS_TCB_t * ) pxCurrentTCB;
         }
         else
         {
@@ -2928,7 +2928,7 @@ BaseType_t xTaskIncrementTick( void )
 
     TaskHookFunction_t xTaskGetApplicationTaskTag( TaskHandle_t xTask )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         TaskHookFunction_t xReturn;
 
         /* If xTask is NULL then set the calling task's hook. */
@@ -2952,7 +2952,7 @@ BaseType_t xTaskIncrementTick( void )
 
     TaskHookFunction_t xTaskGetApplicationTaskTagFromISR( TaskHandle_t xTask )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         TaskHookFunction_t xReturn;
         UBaseType_t uxSavedInterruptStatus;
 
@@ -2978,7 +2978,7 @@ BaseType_t xTaskIncrementTick( void )
     BaseType_t xTaskCallApplicationTaskHook( TaskHandle_t xTask,
                                              void * pvParameter )
     {
-        TCB_t * xTCB;
+        FreeRTOS_TCB_t * xTCB;
         BaseType_t xReturn;
 
         /* If xTask is NULL then we are calling our own task hook. */
@@ -3168,7 +3168,7 @@ void vTaskPlaceOnUnorderedEventList( List_t * pxEventList,
 
 BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList )
 {
-    TCB_t * pxUnblockedTCB;
+    FreeRTOS_TCB_t * pxUnblockedTCB;
     BaseType_t xReturn;
 
     /* THIS FUNCTION MUST BE CALLED FROM A CRITICAL SECTION.  It can also be
@@ -3237,7 +3237,7 @@ BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList )
 void vTaskRemoveFromUnorderedEventList( ListItem_t * pxEventListItem,
                                         const TickType_t xItemValue )
 {
-    TCB_t * pxUnblockedTCB;
+    FreeRTOS_TCB_t * pxUnblockedTCB;
 
     /* THIS FUNCTION MUST BE CALLED WITH THE SCHEDULER SUSPENDED.  It is used by
      * the event flags implementation. */
@@ -3379,7 +3379,7 @@ void vTaskMissedYield( void )
     UBaseType_t uxTaskGetTaskNumber( TaskHandle_t xTask )
     {
         UBaseType_t uxReturn;
-        TCB_t const * pxTCB;
+        FreeRTOS_TCB_t const * pxTCB;
 
         if( xTask != NULL )
         {
@@ -3402,7 +3402,7 @@ void vTaskMissedYield( void )
     void vTaskSetTaskNumber( TaskHandle_t xTask,
                              const UBaseType_t uxHandle )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         if( xTask != NULL )
         {
@@ -3598,7 +3598,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
                                             BaseType_t xIndex,
                                             void * pvValue )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         if( ( xIndex >= 0 ) &&
             ( xIndex < configNUM_THREAD_LOCAL_STORAGE_POINTERS ) )
@@ -3618,7 +3618,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
                                                BaseType_t xIndex )
     {
         void * pvReturn = NULL;
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         if( ( xIndex >= 0 ) &&
             ( xIndex < configNUM_THREAD_LOCAL_STORAGE_POINTERS ) )
@@ -3642,7 +3642,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
     void vTaskAllocateMPURegions( TaskHandle_t xTaskToModify,
                                   const MemoryRegion_t * const xRegions )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         /* If null is passed in here then we are modifying the MPU settings of
          * the calling task. */
@@ -3692,7 +3692,7 @@ static void prvCheckTasksWaitingTermination( void )
 
     #if ( INCLUDE_vTaskDelete == 1 )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         /* uxDeletedTasksWaitingCleanUp is used to prevent taskENTER_CRITICAL()
          * being called too often in the idle task. */
@@ -3721,7 +3721,7 @@ static void prvCheckTasksWaitingTermination( void )
                        BaseType_t xGetFreeStackSpace,
                        eTaskState eState )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
 
         /* xTask is NULL then get the state of the calling task. */
         pxTCB = prvGetTCBFromHandle( xTask );
@@ -3823,8 +3823,8 @@ static void prvCheckTasksWaitingTermination( void )
                                                      List_t * pxList,
                                                      eTaskState eState )
     {
-        configLIST_VOLATILE TCB_t * pxNextTCB;
-        configLIST_VOLATILE TCB_t * pxFirstTCB;
+        configLIST_VOLATILE FreeRTOS_TCB_t * pxNextTCB;
+        configLIST_VOLATILE FreeRTOS_TCB_t * pxFirstTCB;
         UBaseType_t uxTask = 0;
 
         if( listCURRENT_LIST_LENGTH( pxList ) > ( UBaseType_t ) 0 )
@@ -3882,7 +3882,7 @@ static void prvCheckTasksWaitingTermination( void )
  * applications that expect an 8-bit return type. */
     configSTACK_DEPTH_TYPE uxTaskGetStackHighWaterMark2( TaskHandle_t xTask )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         uint8_t * pucEndOfStack;
         configSTACK_DEPTH_TYPE uxReturn;
 
@@ -3917,7 +3917,7 @@ static void prvCheckTasksWaitingTermination( void )
 
     UBaseType_t uxTaskGetStackHighWaterMark( TaskHandle_t xTask )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         uint8_t * pucEndOfStack;
         UBaseType_t uxReturn;
 
@@ -3943,7 +3943,7 @@ static void prvCheckTasksWaitingTermination( void )
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
-    static void prvDeleteTCB( TCB_t * pxTCB )
+    static void prvDeleteTCB( FreeRTOS_TCB_t * pxTCB )
     {
         /* This call is required specifically for the TriCore port.  It must be
          * above the vPortFree() calls.  The call is also used by ports/demos that
@@ -4066,7 +4066,7 @@ static void prvResetNextTaskUnblockTime( void )
 
     BaseType_t xTaskPriorityInherit( TaskHandle_t const pxMutexHolder )
     {
-        TCB_t * const pxMutexHolderTCB = pxMutexHolder;
+        FreeRTOS_TCB_t * const pxMutexHolderTCB = pxMutexHolder;
         BaseType_t xReturn = pdFALSE;
 
         /* If the mutex was given back by an interrupt while the queue was
@@ -4156,7 +4156,7 @@ static void prvResetNextTaskUnblockTime( void )
 
     BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder )
     {
-        TCB_t * const pxTCB = pxMutexHolder;
+        FreeRTOS_TCB_t * const pxTCB = pxMutexHolder;
         BaseType_t xReturn = pdFALSE;
 
         if( pxMutexHolder != NULL )
@@ -4237,7 +4237,7 @@ static void prvResetNextTaskUnblockTime( void )
     void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pxMutexHolder,
                                               UBaseType_t uxHighestPriorityWaitingTask )
     {
-        TCB_t * const pxTCB = pxMutexHolder;
+        FreeRTOS_TCB_t * const pxTCB = pxMutexHolder;
         UBaseType_t uxPriorityUsedOnEntry, uxPriorityToUse;
         const UBaseType_t uxOnlyOneMutexHeld = ( UBaseType_t ) 1;
 
@@ -4852,7 +4852,7 @@ TickType_t uxTaskResetEventItemValue( void )
                                    eNotifyAction eAction,
                                    uint32_t * pulPreviousNotificationValue )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         BaseType_t xReturn = pdPASS;
         uint8_t ucOriginalNotifyState;
 
@@ -4976,7 +4976,7 @@ TickType_t uxTaskResetEventItemValue( void )
                                           uint32_t * pulPreviousNotificationValue,
                                           BaseType_t * pxHigherPriorityTaskWoken )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         uint8_t ucOriginalNotifyState;
         BaseType_t xReturn = pdPASS;
         UBaseType_t uxSavedInterruptStatus;
@@ -5112,7 +5112,7 @@ TickType_t uxTaskResetEventItemValue( void )
                                         UBaseType_t uxIndexToNotify,
                                         BaseType_t * pxHigherPriorityTaskWoken )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         uint8_t ucOriginalNotifyState;
         UBaseType_t uxSavedInterruptStatus;
 
@@ -5200,7 +5200,7 @@ TickType_t uxTaskResetEventItemValue( void )
     BaseType_t xTaskGenericNotifyStateClear( TaskHandle_t xTask,
                                              UBaseType_t uxIndexToClear )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         BaseType_t xReturn;
 
         configASSERT( uxIndexToClear < configTASK_NOTIFICATION_ARRAY_ENTRIES );
@@ -5235,7 +5235,7 @@ TickType_t uxTaskResetEventItemValue( void )
                                             UBaseType_t uxIndexToClear,
                                             uint32_t ulBitsToClear )
     {
-        TCB_t * pxTCB;
+        FreeRTOS_TCB_t * pxTCB;
         uint32_t ulReturn;
 
         /* If null is passed in here then it is the calling task that is having

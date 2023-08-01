@@ -6,7 +6,7 @@
  * 
  * @brief       https://www.freertos.org/a00110.html
  * 
- * @copyright   (c) 2022 Martin Legleiter
+ * @copyright   (c) 2023 Martin Legleiter
  * 
  * @license     Use of this source code is governed by an MIT-style
  *              license that can be found in the LICENSE file or at
@@ -136,6 +136,15 @@
 
     #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
 
+#elif defined( ARDUINO_AVR_NANO_EVERY ) || \
+      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+
+    /* INFO: The Arduino megaavr core implementation uses Timer0 for PWM pin 6,
+    Timer1 for PWM pin 3 and the tone() function, Timer2 for the servo library
+    and Timer3 for the functions millis(), micros() and delay(). */
+    #define configUSE_TIMER_INSTANCE    4
+    #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 )
+
 #endif
 /*-----------------------------------------------------------*/
 
@@ -149,7 +158,9 @@
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 1024 )
 
-#elif defined( ARDUINO_AVR_MEGA2560 )
+#elif defined( ARDUINO_AVR_MEGA2560 ) || \
+      defined( ARDUINO_AVR_NANO_EVERY ) || \
+      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 2048 )
 
