@@ -95,6 +95,8 @@ typedef uint8_t                     UBaseType_t;
 
 /* Architecture specifics. */
 
+#if( portUSE_TIMER5 == 0 )
+
 /* System Tick  - Scheduler timer
  * Prefer to use the enhanced Watchdog Timer, but also Timer0 is ok.
  */
@@ -116,6 +118,8 @@ typedef uint8_t                     UBaseType_t;
 #else
 
 #define portUSE_TIMER0                          /* use the 8-bit Timer0 for xTaskIncrementTick */
+
+#endif
 
 #endif
 

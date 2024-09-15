@@ -65,6 +65,11 @@
     #define portTIMSK                   TIMSK0
     #define portTIFR                    TIFR0
 
+#elif defined( portUSE_TIMER5 )
+/* Hardware constants for Timer5. */
+    #warning "Timer5 used for scheduler."
+    #define portSCHEDULER_ISR           TIMER5_COMPA_vect
+
 #else
     #error "No Timer defined for scheduler"
 #endif
@@ -727,6 +732,52 @@ uint8_t ucLowByte;
     ucLowByte = portTIMSK;
     ucLowByte |= portCOMPARE_MATCH_A_INTERRUPT_ENABLE;
     portTIMSK = ucLowByte;
+}
+
+#elif defined (portUSE_TIMER5)
+/*
+ * Setup Timer5 compare match A to generate a tick interrupt.
+ *
+ * INFO :   Timer5 get referenced and partially configured in the Arduino core
+ *          implementation (wiring.c and Tone.cpp), but is never actually used.
+ */
+static void prvSetupTimerInterrupt( void )
+{
+    /* Should not be needed, but the Arduino core implementation (wiring.c)
+     * sets bit WGM50 to "put timer 5 in 8-bit phase correct pwm mode".
+     *
+     * INFO :   TCCR5A must be cleared before setting OCR5A! Otherwise something
+     *          goes wrong and the ISR fires in the wrong frequency!
+     */
+    TCCR5A = 0;
+
+    /* WGM52 sets the CTC1 mode. That means that if OCR5A and TCNT5 (Timer
+     * CouNTer 5) match, TCNT5 will automatically reset. CS51 and CS50 set the
+     * prescaler to a value of 64.
+     * 
+     * INFO :   The Arduino core implementation (wiring.c) sets bits CS51 and
+     *          CS50 by default to get a prescaler of 64, but just to get safe,
+     *          we do it here again.
+     */
+    TCCR5B = ( 1 << WGM52 ) | ( 1 << CS51 ) | ( 1 << CS50 );
+
+    /* Output Compare Register (OCRnx) value formular:
+     *
+     *               f_CPU                                 
+     * OCRnx = ---------------- - 1
+     *         prescaler * f_OC 
+     */
+    OCR5A = ( configCPU_CLOCK_HZ / ( 64 * configTICK_RATE_HZ ) ) - 1;
+
+    /* Set the OCIE5A (Output Compare Interrupt Enable) bit in TIMSK5 (Timer
+     * Interrupt MaSK), so the ISR gets called when OCR5A and TCNT5 match.
+     * 
+     * INFO :   OCIE5A could in theory be set an cleared in the Arduino core
+     *          implementation (Tone.cpp) via the functions tone() and
+     *          disableTimer() - but right now this can never happen because by
+     *          code only Timer2 can be used.
+     */
+    TIMSK5 = ( 1 << OCIE5A );
 }
 
 #endif

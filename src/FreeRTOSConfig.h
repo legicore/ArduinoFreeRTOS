@@ -124,12 +124,28 @@
 /* Set the tick rate for the supported devices. */
 #if defined( ARDUINO_AVR_UNO ) || \
     defined( ARDUINO_AVR_LEONARDO ) || \
-    defined( ARDUINO_AVR_MEGA2560 ) || \
     defined( ARDUINO_AVR_PRO )
 
     /* These devices are using the watchdog timer interrupt to generate the
     system ticks, which results in a different/lower tick rate. */
     #define configTICK_RATE_HZ          ( ( TickType_t ) 1000 / portTICK_PERIOD_MS )
+
+#elif defined( ARDUINO_AVR_MEGA2560 )
+
+    /* When set to 0, the Watchdog timer interrupt is used to generate the
+     * system ticks.
+     *
+     * INFO :   Some playground libraries can also use Timer5. Make sure that
+     *          none of your used libraries also use Timer5 to prevent wrong
+     *          configuration and/or cross usage.
+     */
+    #define portUSE_TIMER5              1
+
+    #if( portUSE_TIMER5 == 1 )
+        #define configTICK_RATE_HZ      ( ( TickType_t ) 1000 )
+    #else
+        #define configTICK_RATE_HZ      ( ( TickType_t ) 1000 / portTICK_PERIOD_MS )
+    #endif
 
 #elif defined( ARDUINO_MINIMA ) || \
       defined( ARDUINO_UNOWIFIR4 )
