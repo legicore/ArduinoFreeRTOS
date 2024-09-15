@@ -159,15 +159,18 @@
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 1024 )
 
 #elif defined( ARDUINO_AVR_MEGA2560 ) || \
-      defined( ARDUINO_AVR_NANO_EVERY ) || \
-      defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+      defined( ARDUINO_AVR_NANO_EVERY )
 
     #define configTOTAL_HEAP_SIZE   ( ( size_t ) 2048 )
+
+#elif defined( ARDUINO_AVR_UNO_WIFI_REV2 )
+
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 3072 )
 
 #elif defined( ARDUINO_MINIMA ) || \
       defined( ARDUINO_UNOWIFIR4 )
 
-    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 8192 )
+    #define configTOTAL_HEAP_SIZE   ( ( size_t ) 4096 )
 
 #endif
 /*-----------------------------------------------------------*/
