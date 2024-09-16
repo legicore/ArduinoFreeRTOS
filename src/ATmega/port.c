@@ -743,23 +743,24 @@ uint8_t ucLowByte;
  */
 static void prvSetupTimerInterrupt( void )
 {
-    /* Should not be needed, but the Arduino core implementation (wiring.c)
+    /* Should not be needed, but the Arduino core implementation (wiring.c:350)
      * sets bit WGM50 to "put timer 5 in 8-bit phase correct pwm mode".
      *
-     * INFO :   TCCR5A must be cleared before setting OCR5A! Otherwise something
+     * INFO :   TCCR5A must be configured before OCR5A - otherwise something
      *          goes wrong and the ISR fires in the wrong frequency!
      */
-    TCCR5A = 0;
+    TCCR5A = ( 0 << WGM51 ) | ( 0 << WGM50 );
 
-    /* WGM52 sets the CTC1 mode. That means that if OCR5A and TCNT5 (Timer
-     * CouNTer 5) match, TCNT5 will automatically reset. CS51 and CS50 set the
-     * prescaler to a value of 64.
+    /* To set the CTC5 (Clear Timer on Compare) mode, all WGM5x bits must be
+     * cleared, except WGM52. That means that if OCR5A and TCNT5 (Timer CouNTer)
+     * match, TCNT5 will be automatically reset.
+     * CS51 and CS50 set the prescaler to a value of 64.
      * 
-     * INFO :   The Arduino core implementation (wiring.c) sets bits CS51 and
+     * INFO :   The Arduino core implementation (wiring.c:348) sets bit CS51 and
      *          CS50 by default to get a prescaler of 64, but just to get safe,
      *          we do it here again.
      */
-    TCCR5B = ( 1 << WGM52 ) | ( 1 << CS51 ) | ( 1 << CS50 );
+    TCCR5B = ( 0 << WGM53 ) | ( 1 << WGM52 ) | ( 0 << CS52 ) | ( 1 << CS51 ) | ( 1 << CS50 );
 
     /* Output Compare Register (OCRnx) value formular:
      *
@@ -773,9 +774,9 @@ static void prvSetupTimerInterrupt( void )
      * Interrupt MaSK), so the ISR gets called when OCR5A and TCNT5 match.
      * 
      * INFO :   OCIE5A could in theory be set an cleared in the Arduino core
-     *          implementation (Tone.cpp) via the functions tone() and
-     *          disableTimer() - but right now this can never happen because by
-     *          code only Timer2 can be used.
+     *          implementation via the functions tone() (Tone.cpp:414) and
+     *          disableTimer() (Tone.cpp:473) - but right now this can not
+     *          happen, because by code only Timer2 can be used.
      */
     TIMSK5 = ( 1 << OCIE5A );
 }
