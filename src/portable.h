@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V10.6.0
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V11.1.0
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,6 +83,10 @@
 
 #ifndef portARCH_NAME
     #define portARCH_NAME    NULL
+#endif
+
+#ifndef configSTACK_DEPTH_TYPE
+    #define configSTACK_DEPTH_TYPE    StackType_t
 #endif
 
 #ifndef configSTACK_ALLOCATION_FROM_SEPARATE_HEAP
@@ -174,7 +178,7 @@ void vPortGetHeapStats( HeapStats_t * pxHeapStats );
 /*
  * Map to the memory management routines required for the port.
  */
-void * pvPortMalloc( size_t xSize ) PRIVILEGED_FUNCTION;
+void * pvPortMalloc( size_t xWantedSize ) PRIVILEGED_FUNCTION;
 void * pvPortCalloc( size_t xNum,
                      size_t xSize ) PRIVILEGED_FUNCTION;
 void vPortFree( void * pv ) PRIVILEGED_FUNCTION;
@@ -190,6 +194,12 @@ size_t xPortGetMinimumEverFreeHeapSize( void ) PRIVILEGED_FUNCTION;
     #define vPortFreeStack       vPortFree
 #endif
 
+/*
+ * This function resets the internal state of the heap module. It must be called
+ * by the application before restarting the scheduler.
+ */
+void vPortHeapResetState( void ) PRIVILEGED_FUNCTION;
+
 #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
 
 /**
@@ -200,7 +210,7 @@ size_t xPortGetMinimumEverFreeHeapSize( void ) PRIVILEGED_FUNCTION;
  *
  * This hook function is called when allocation failed.
  */
-    void vApplicationMallocFailedHook( void ); /*lint !e526 Symbol not defined as it is an application callback. */
+    void vApplicationMallocFailedHook( void );
 #endif
 
 /*
@@ -228,7 +238,7 @@ void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
     void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                                     const struct xMEMORY_REGION * const xRegions,
                                     StackType_t * pxBottomOfStack,
-                                    uint32_t ulStackDepth ) PRIVILEGED_FUNCTION;
+                                    configSTACK_DEPTH_TYPE uxStackDepth ) PRIVILEGED_FUNCTION;
 #endif
 
 /**
@@ -245,6 +255,21 @@ void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
     BaseType_t xPortIsAuthorizedToAccessBuffer( const void * pvBuffer,
                                                 uint32_t ulBufferLength,
                                                 uint32_t ulAccessRequested ) PRIVILEGED_FUNCTION;
+#endif
+
+/**
+ * @brief Checks if the calling task is authorized to access the given kernel object.
+ *
+ * @param lInternalIndexOfKernelObject The index of the kernel object in the kernel
+ *                                     object handle pool.
+ *
+ * @return pdTRUE if the calling task is authorized to access the kernel object,
+ *         pdFALSE otherwise.
+ */
+#if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) )
+
+    BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) PRIVILEGED_FUNCTION;
+
 #endif
 
 /* *INDENT-OFF* */
